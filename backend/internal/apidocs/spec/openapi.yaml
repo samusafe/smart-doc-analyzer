@@ -1,0 +1,364 @@
+openapi: 3.1.0
+info:
+  title: Document Analyzer API
+  version: 1.0.0
+  description: API for document analysis, collections management and quiz generation.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Service health status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+  /analyze:
+    post:
+      tags: [Analyze]
+      summary: Analyze uploaded documents
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                collectionId:
+                  type: integer
+                  format: int32
+              required: [documents]
+      responses:
+        '200':
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResultsEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /generate-quiz:
+    post:
+      tags: [Analyze]
+      summary: Generate quiz from text
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+              required: [text]
+      responses:
+        '200':
+          description: Quiz generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /documents:
+    get:
+      tags: [Documents]
+      summary: List all documents for user
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentsEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /documents/{documentId}/latest-analysis:
+    get:
+      tags: [Documents]
+      summary: Get latest analysis for a document
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: documentId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Latest analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisDetailEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /documents/save:
+    post:
+      tags: [Documents]
+      summary: Assign a document to a collection
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documentId: { type: integer }
+                collectionId: { type: integer }
+              required: [documentId, collectionId]
+      responses:
+        '200':
+          description: Document saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /collections:
+    get:
+      tags: [Collections]
+      summary: List collections
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Collections list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionsEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [Collections]
+      summary: Create collection
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+              required: [name]
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionCreatedEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /collections/{id}:
+    delete:
+      tags: [Collections]
+      summary: Delete collection
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Deleted, content: { application/json: { schema: { $ref: '#/components/schemas/MessageEnvelope' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /collections/{id}/documents:
+    get:
+      tags: [Collections]
+      summary: List documents in a collection
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Documents list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentsEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    InternalError:
+      description: Internal server error
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    NotFound:
+      description: Not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    Conflict:
+      description: Conflict
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    Unauthorized:
+      description: Unauthorized
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+    PayloadTooLarge:
+      description: Payload too large
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } }
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        data: {}
+        correlationId: { type: string }
+    MessageEnvelope:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            message: { type: string }
+        correlationId: { type: string }
+    ErrorEnvelope:
+      type: object
+      properties:
+        message: { type: string }
+        detail: {}
+        correlationId: { type: string }
+    AnalyzeResult:
+      type: object
+      properties:
+        fileName: { type: string }
+        reused: { type: boolean }
+        error: { type: string }
+        data:
+          type: object
+          properties:
+            summary: { type: string }
+            keywords: { type: array, items: { type: string } }
+            sentiment: { type: string }
+            fullText: { type: string }
+    AnalyzeResultsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items: { $ref: '#/components/schemas/AnalyzeResult' }
+    QuizQuestion:
+      type: object
+      properties:
+        question: { type: string }
+        answer: { type: string }
+    QuizEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                quiz:
+                  type: array
+                  items: { $ref: '#/components/schemas/QuizQuestion' }
+    Collection:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+    CollectionsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                collections:
+                  type: array
+                  items: { $ref: '#/components/schemas/Collection' }
+    CollectionCreatedEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                collection: { $ref: '#/components/schemas/Collection' }
+                message: { type: string }
+    DocumentItem:
+      type: object
+      properties:
+        id: { type: integer }
+        fileName: { type: string }
+        analysesCount: { type: integer }
+        lastAnalysisAt: { type: string, nullable: true }
+        collectionId: { type: integer, nullable: true }
+    DocumentsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items: { type: array, items: { $ref: '#/components/schemas/DocumentItem' } }
+                total: { type: integer }
+    AnalysisDetail:
+      type: object
+      properties:
+        analysisId: { type: integer }
+        documentId: { type: integer }
+        fileName: { type: string }
+        summary: { type: string }
+        sentiment: { type: string }
+        keywords: { type: array, items: { type: string } }
+        collectionId: { type: integer, nullable: true }
+        createdAt: { type: string }
+        analysisVersion: { type: integer }
+        batchId: { type: string, nullable: true }
+        batchSize: { type: integer, nullable: true }
+        fullText: { type: string }
+    AnalysisDetailEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                analysis: { $ref: '#/components/schemas/AnalysisDetail' }

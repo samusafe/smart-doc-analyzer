@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -8,26 +9,37 @@ import (
 	"github.com/samusafe/genericapi/internal/utils"
 )
 
-// ClerkAuth validates Clerk tokens and injects the user ID into context
+// ClerkAuth enforces authentication (hard fail without valid token)
 func ClerkAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract Bearer token
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(utils.StatusUnauthorized, gin.H{"error": utils.GetMessage(c.GetString("lang"), "Unauthorized")})
+			utils.GinError(c, http.StatusUnauthorized, "Unauthorized", "missing bearer token")
 			return
 		}
 		token := strings.TrimPrefix(authHeader, "Bearer ")
-
-		// Verify token with Clerk SDK
 		claims, err := config.ClerkClient.VerifyToken(token)
 		if err != nil {
-			c.AbortWithStatusJSON(utils.StatusUnauthorized, gin.H{"error": utils.GetMessage(c.GetString("lang"), "Unauthorized")})
+			utils.GinError(c, http.StatusUnauthorized, "Unauthorized", err.Error())
 			return
 		}
-
-		// Inject user ID (subject) into context
 		c.Set("userID", claims.Subject)
+		c.Next()
+	}
+}
+
+// ClerkAuthOptional sets userID if valid token presented, but does not require auth
+func ClerkAuthOptional() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.Next()
+			return
+		}
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if claims, err := config.ClerkClient.VerifyToken(token); err == nil {
+			c.Set("userID", claims.Subject)
+		}
 		c.Next()
 	}
 }

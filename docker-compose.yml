@@ -1,21 +1,153 @@
+name: docanalyzer
 services:
-  backend:
+  # --- DEVELOPMENT SERVICES ---
+  db-dev:
+    profiles: ["development"]
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_DEV}
+    volumes:
+      - db_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_DEV}"]
+
+  backend-dev:
+    profiles: ["development"]
+    image: docanalyzer-backend-dev:1.0.0
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      target: development
     ports:
-      - "8080:8080"
-    env_file:
-      - .env
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    environment:
+      - GIN_MODE=debug
+      - PYTHON_SERVICE_URL=http://python-dev:5000
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-dev:${POSTGRES_PORT}/${POSTGRES_DB_DEV}?sslmode=disable
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - APP_VERSION=${APP_VERSION}
+    volumes:
+      - ./backend:/src
+    depends_on:
+      db-dev:
+        condition: service_healthy
+      python-dev:
+        condition: service_started
 
-  frontend:
+  python-dev:
+    profiles: ["development"]
+    image: docanalyzer-python-dev:1.0.0
+    build:
+      context: ./python
+      target: development
+    ports:
+      - "${PYTHON_PORT}:${PYTHON_PORT}"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./python/app:/app/app
+    depends_on:
+      db-dev:
+        condition: service_healthy
+
+  frontend-dev:
+    profiles: ["development"]
+    image: docanalyzer-frontend-dev:1.0.0
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      target: development
+      args:
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8080
-      - PORT=3000
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:${FRONTEND_PORT}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
-      - backend
+      backend-dev:
+        condition: service_started
+
+  # --- PRODUCTION SERVICES ---
+  db-prod:
+    profiles: ["production"]
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_PROD}
+    volumes:
+      - db_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_PROD}"]
+
+  backend-prod:
+    profiles: ["production"]
+    image: docanalyzer-backend-prod:1.0.0
+    build:
+      context: ./backend
+      target: production
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    environment:
+      - GIN_MODE=release
+      - PYTHON_SERVICE_URL=http://python-prod:5000
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-prod:${POSTGRES_PORT}/${POSTGRES_DB_PROD}?sslmode=disable
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - APP_VERSION=${APP_VERSION}
+    depends_on:
+      db-prod:
+        condition: service_healthy
+      python-prod:
+        condition: service_started
+
+  python-prod:
+    profiles: ["production"]
+    image: docanalyzer-python-prod:1.0.0
+    build:
+      context: ./python
+      target: production
+    ports:
+      - "${PYTHON_PORT}:${PYTHON_PORT}"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      db-prod:
+        condition: service_healthy
+
+  frontend-prod:
+    profiles: ["production"]
+    image: docanalyzer-frontend-prod:1.0.0
+    build:
+      context: ./frontend
+      target: production
+      args:
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend-prod:${BACKEND_PORT}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      backend-prod:
+        condition: service_healthy
+
+volumes:
+  db_data_dev:
+  db_data_prod:

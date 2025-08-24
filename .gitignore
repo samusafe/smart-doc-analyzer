@@ -1,6 +1,5 @@
 # Environmental files
 .env
-frontend/.env.local
 
 # Go build artifacts
 /backend/server

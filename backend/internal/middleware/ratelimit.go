@@ -2,12 +2,14 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/samusafe/genericapi/internal/config"
 	"github.com/samusafe/genericapi/internal/utils"
 	"golang.org/x/time/rate"
 )
 
-func RateLimiter(r rate.Limit, b int) gin.HandlerFunc {
-	limiter := rate.NewLimiter(r, b)
+// RateLimiter enforces a simple token bucket (interval defines refill frequency, burst immediate capacity).
+func RateLimiter() gin.HandlerFunc {
+	limiter := rate.NewLimiter(rate.Every(config.RateLimitInterval), config.RateLimitBurst)
 	return func(c *gin.Context) {
 		if !limiter.Allow() {
 			lang := c.GetString("lang")

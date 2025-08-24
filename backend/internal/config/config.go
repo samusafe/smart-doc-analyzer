@@ -1,36 +1,39 @@
 package config
 
 import (
-	"os"
 	"time"
+
+	"github.com/samusafe/genericapi/internal/utils"
 )
 
-// Default port for the API, can be overridden by environment variable
-var Port = func() string {
-	if p := os.Getenv("PORT"); p != "" {
-		return p
-	}
-	return "8080"
-}()
-
-// Supported languages for the API
-var SupportedLanguages = []string{"en", "pt"}
-
-// Rate limiting configuration: interval between tokens and burst size
+// Core tunable constants (defaults; can be overridden via env)
 const (
-	RateLimitInterval = time.Second
-	RateLimitBurst    = 5
+	defaultRateLimitIntervalMs = 1000
+	defaultRateLimitBurst      = 5
+	defaultHTTPClientTimeout   = 90 * time.Second
+	defaultMaxUploadBytes      = 5 * 1024 * 1024 // 5MB
+	defaultQuizMaxChars        = 100_000
+	SwaggerAlwaysEnabled       = true // serve swagger endpoints unconditionally
 )
 
-// Example: Prices for different features/products
-var Prices = map[string]float64{
-	"basic_plan":   9.99,
-	"premium_plan": 19.99,
-	"ai_feature":   4.99,
-}
+var (
+	// overridable via env
+	RateLimitInterval = time.Duration(utils.IntFromEnv("RATE_LIMIT_INTERVAL_MS", defaultRateLimitIntervalMs)) * time.Millisecond
+	RateLimitBurst    = utils.IntFromEnv("RATE_LIMIT_BURST", defaultRateLimitBurst)
+	HTTPClientTimeout = utils.DurationFromEnvSeconds("HTTP_CLIENT_TIMEOUT_SECONDS", defaultHTTPClientTimeout)
+	MaxUploadBytes    = int64(utils.IntFromEnv("MAX_UPLOAD_BYTES", int(defaultMaxUploadBytes)))
+	QuizMaxChars      = utils.IntFromEnv("QUIZ_MAX_CHARS", defaultQuizMaxChars)
+)
 
-// Example: Generic API variables
-var Variables = map[string]interface{}{
-	"MaxRequestSize": 1048576, // 1MB
-	"DefaultCountry": "PT",
-}
+// Core string settings
+var (
+	Port             = utils.UseEnvOrDefault("BACKEND_PORT", "8080")
+	PythonServiceURL = utils.UseEnvOrDefault("PYTHON_SERVICE_URL", "http://python:5000")
+	DatabaseURL      = utils.UseEnvOrDefault("DATABASE_URL", "postgres://postgres:postgres@db:5432/docanalyzer?sslmode=disable")
+)
+
+// Supported static lists
+var (
+	SupportedLanguages = []string{"en", "pt"}
+	SupportedFileTypes = []string{".txt", ".md", ".pdf", ".docx"}
+)

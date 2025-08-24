@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark palette now default */
+    --brand-start: 255 85% 62%;
+    --brand-end: 275 70% 58%;
+    --brand-accent: 200 90% 55%;
+
+    --surface: 223 30% 14%;
+    --surface-alt: 223 32% 18%;
+    --surface-border: 223 25% 26%;
+    --surface-muted: 223 30% 20%;
+    --bg-grid-dot: 223 30% 28%;
+
+    --background: 223 30% 12%;
+    --foreground: 210 40% 96%;
+    --primary: var(--brand-start);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--surface-muted);
+    --secondary-foreground: 210 40% 96%;
+    --accent: var(--brand-accent);
+    --accent-foreground: 210 40% 96%;
+    --muted: var(--surface-muted);
+    --muted-foreground: 215 18% 72%;
+    --border: var(--surface-border);
+    --input: var(--surface-border);
+    --ring: var(--brand-start);
+    --radius: 0.6rem;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at 1px 1px, hsl(var(--bg-grid-dot) / 0.5) 1px, transparent 0),
+      linear-gradient(140deg, hsl(var(--brand-start) / 0.12), hsl(var(--brand-end) / 0.08) 55%, hsl(var(--brand-accent) / 0.06));
+    background-size: 22px 22px, 100% 100%;
+    color: hsl(var(--foreground));
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .bg-brand-gradient { background: linear-gradient(125deg, hsl(var(--brand-start)) 0%, hsl(var(--brand-end)) 55%, hsl(var(--brand-accent)) 100%); }
+  .text-gradient { background: linear-gradient(90deg, hsl(var(--brand-start)), hsl(var(--brand-end))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card-surface { background: hsl(var(--surface-alt) / 0.85); border: 1px solid hsl(var(--surface-border)); }
+  .animate-fade-in { animation: fade-in 180ms ease-out; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 }
