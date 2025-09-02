@@ -11,7 +11,8 @@ RUN npm ci
 FROM base AS development
 WORKDIR /app
 COPY . .
-RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
+RUN addgroup -S app && adduser -S app -G app
+RUN chown -R app:app /app
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 CMD wget -qO- http://127.0.0.1:3000/ || exit 1

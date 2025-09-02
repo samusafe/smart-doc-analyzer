@@ -77,7 +77,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
+      - next_cache:/app/.next
     depends_on:
       backend-dev:
         condition: service_started
@@ -159,3 +159,4 @@ services:
 volumes:
   db_data_dev:
   db_data_prod:
+  next_cache:
