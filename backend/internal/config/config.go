@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"time"
 
 	"github.com/samusafe/genericapi/internal/utils"
@@ -23,6 +24,7 @@ var (
 	HTTPClientTimeout = utils.DurationFromEnvSeconds("HTTP_CLIENT_TIMEOUT_SECONDS", defaultHTTPClientTimeout)
 	MaxUploadBytes    = int64(utils.IntFromEnv("MAX_UPLOAD_BYTES", int(defaultMaxUploadBytes)))
 	QuizMaxChars      = utils.IntFromEnv("QUIZ_MAX_CHARS", defaultQuizMaxChars)
+	SwaggerUIVersion  = utils.UseEnvOrDefault("SWAGGER_UI_VERSION", "5.17.14")
 )
 
 // Core string settings
@@ -36,4 +38,18 @@ var (
 var (
 	SupportedLanguages = []string{"en", "pt"}
 	SupportedFileTypes = []string{".txt", ".md", ".pdf", ".docx"}
+	AllowedOrigins     = loadAllowedOrigins()
 )
+
+func loadAllowedOrigins() []string {
+	raw := utils.UseEnvOrDefault("ALLOWED_ORIGINS", "http://localhost:3000")
+	parts := strings.Split(raw, ",")
+	var out []string
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}

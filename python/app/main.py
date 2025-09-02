@@ -12,7 +12,7 @@ app = FastAPI(title="Intelligent Document Analyzer")
 @app.on_event("startup")
 async def startup_event():
     """
-    Load NLP models on application startup.
+    Load Keybert model on application startup.
     """
     print("🚀 Starting up and loading models...")
     # Load models in a separate thread to avoid blocking

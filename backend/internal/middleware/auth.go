@@ -15,12 +15,14 @@ func ClerkAuth() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			utils.GinError(c, http.StatusUnauthorized, "Unauthorized", "missing bearer token")
+			c.Abort()
 			return
 		}
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		claims, err := config.ClerkClient.VerifyToken(token)
 		if err != nil {
 			utils.GinError(c, http.StatusUnauthorized, "Unauthorized", err.Error())
+			c.Abort()
 			return
 		}
 		c.Set("userID", claims.Subject)

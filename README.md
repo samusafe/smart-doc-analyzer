@@ -1,7 +1,7 @@
 # Smart Document Analyzer
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/samusafe/smart-doc-analyzer/main/frontend/public/file.svg" alt="smart-doc-analyzer" height="64" />
+  <img src="./.github/assets/smart-doc-analyzer.png" alt="smart-doc-analyzer" width="100% />
 </p>
 <p align="center">
   <b>Multi-language (EN/PT) intelligent document analysis & knowledge tooling platform.</b><br/>
@@ -20,12 +20,14 @@
 
 <p align="center">
   <a href="#-features">Features</a> ·
-  <a href="#-quick-start">Quick Start</a> ·
-  <a href="#-architecture">Architecture</a> ·
-  <a href="#-caching--performance">Caching</a> ·
+  <a href="#-environment-setup">Setup</a> ·
+  <a href="#running-the-project">Running</a> ·
+  <a href="#-api-documentation-swagger">API Docs</a> ·
+  <a href="#-testing">Testing</a> ·
+  <a href="#-caching--performance">Performance</a> ·
   <a href="#-internationalization">i18n</a> ·
-  <a href="#-roadmap">Roadmap</a> ·
-  <a href="#-contributing">Contributing</a>
+  <a href="#-contributing">Contributing</a> ·
+  <a href="#-license">License</a>
 </p>
 
 ---
@@ -40,7 +42,6 @@
 | Internationalization  | English & Portuguese, persistent user choice (localStorage), runtime detection & normalization, backend message alignment        |
 | Performance           | In-memory + sessionStorage hybrid caching, soft TTL background revalidation (focus + interval), promise de-duplication           |
 | Security & Robustness | Rate limiting, file type restrictions, Clerk auth integration, graceful duplicate & error messaging                              |
-| Extensibility         | Centralized message catalog, modular services/repositories, pluggable quiz generator (Python microservice)                       |
 
 ---
 
@@ -58,20 +59,22 @@ To run this project, you need to set up the environment variables.
 2.  **Fill in the Environment Variables:**
     Open the `.env` file and fill in the required values. The most important variables to configure are:
 
-    | Variable                            | Description                                                                 | Example            |
-    | ----------------------------------- | --------------------------------------------------------------------------- | ------------------ |
-    | `COMPOSE_PROFILES`                  | **Most important.** Defines the environment: `development` or `production`. | `development`      |
-    | `POSTGRES_USER`                     | The database user.                                                          | `postgres`         |
-    | `POSTGRES_PASSWORD`                 | The database password.                                                      | `postgres`         |
-    | `POSTGRES_DB_DEV`                   | The database name for the development environment.                          | `docanalyzer_dev`  |
-    | `POSTGRES_DB_PROD`                  | The database name for the production environment.                           | `docanalyzer_prod` |
-    | `CLERK_SECRET_KEY`                  | The Clerk secret key for authentication.                                    | `sk_test_...`      |
-    | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | The Clerk publishable key for the frontend.                                 | `pk_test_...`      |
-    | `OPENAI_API_KEY`                    | (Optional) The OpenAI API key for AI features.                              | `sk-...`           |
-    | `FRONTEND_PORT`                     | The external port for the frontend service.                                 | `3000`             |
-    | `BACKEND_PORT`                      | The external port for the backend service.                                  | `8080`             |
-    | `PYTHON_PORT`                       | The external port for the python service.                                   | `5000`             |
-    | `LOG_LEVEL`                         | Sets the backend log level. Can be `debug`, `info`, `warn`, or `error`.     | `info`             |
+    | Variable                            | Description                                                                 | Example                   |
+    | ----------------------------------- | --------------------------------------------------------------------------- | ------------------------- |
+    | `COMPOSE_PROFILES`                  | **Most important.** Defines the environment: `development` or `production`. | `development`             |
+    | `POSTGRES_USER`                     | The database user.                                                          | `postgres`                |
+    | `POSTGRES_PASSWORD`                 | The database password.                                                      | `postgres`                |
+    | `POSTGRES_DB_DEV`                   | The database name for the development environment.                          | `docanalyzer_dev`         |
+    | `POSTGRES_DB_PROD`                  | The database name for the production environment.                           | `docanalyzer_prod`        |
+    | `CLERK_SECRET_KEY`                  | The Clerk secret key for authentication.                                    | `sk_test_...`             |
+    | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | The Clerk publishable key for the frontend.                                 | `pk_test_...`             |
+    | `SUMMARIZER_MODEL_NAME`             | The Hugging Face model for summarization.                                   | `facebook/bart-large-cnn` |
+    | `KEYBERT_MODEL_NAME`                | The sentence-transformers model for keyword extraction.                     | `all-MiniLM-L6-v2`        |
+    | `QG_MODEL_NAME`                     | The Hugging Face model for quiz generation.                                 | `valhalla/t5-base-qg-hl`  |
+    | `FRONTEND_PORT`                     | The external port for the frontend service.                                 | `3000`                    |
+    | `BACKEND_PORT`                      | The external port for the backend service.                                  | `8080`                    |
+    | `PYTHON_PORT`                       | The external port for the python service.                                   | `5000`                    |
+    | `LOG_LEVEL`                         | Sets the backend log level. Can be `debug`, `info`, `warn`, or `error`.     | `info`                    |
 
 ## Running the Project
 
@@ -279,7 +282,7 @@ cd backend && go test ./...
 
 ## 📄 License
 
-Distributed under the MIT License. See [LICENSE](./LICENSE).
+Distributed under the Apache License. See [LICENSE](./LICENSE).
 
 ---
 

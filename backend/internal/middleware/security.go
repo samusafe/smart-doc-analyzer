@@ -10,7 +10,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		FrameDeny:             true,
 		ContentTypeNosniff:    true,
 		BrowserXssFilter:      true,
-		ContentSecurityPolicy: "default-src 'self'",
+		ContentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; manifest-src 'none'; upgrade-insecure-requests",
 	})
 	return func(c *gin.Context) {
 		err := secureMiddleware.Process(c.Writer, c.Request)

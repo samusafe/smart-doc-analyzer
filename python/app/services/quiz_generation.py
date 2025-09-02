@@ -1,6 +1,6 @@
 import random
 from sentence_splitter import SentenceSplitter
-from .models_loader import get_qa_pipeline, get_nlp
+from .models_loader import get_qa_pipeline, get_keybert_model
 
 # Heuristic strategy: prefer model-based QG; if unavailable, derive cloze (named entity masking)
 # or simple True/blank questions from semantically meaningful sentences.
@@ -39,17 +39,17 @@ def generate_quiz(text: str, num_questions: int = 5):
 
 
 def fallback_quiz(text: str, num_questions: int = 5):
-    nlp = get_nlp()
-    if not nlp:
+    keybert_model = get_keybert_model()
+    if not keybert_model:
         return {"quiz": []}
-    doc = nlp(text)
+    doc = keybert_model(text)
     sentences = [s.text.strip() for s in doc.sents if len(s.text.split()) > 5]
     if not sentences:
         return {"quiz": []}
     selected = random.sample(sentences, min(len(sentences), num_questions))
     quiz_questions = []
     for sentence in selected:
-        ents = [ent.text for ent in nlp(sentence).ents if ent.label_ in ["PERSON", "ORG", "GPE"]]
+        ents = [ent.text for ent in keybert_model(sentence).ents if ent.label_ in ["PERSON", "ORG", "GPE"]]
         if ents:
             ent = ents[0]
             question = sentence.replace(ent, "______")

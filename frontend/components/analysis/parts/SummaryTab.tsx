@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { exportSummaryDocx, exportSummaryPdf } from '@/lib/export/summaryExport';
 import { AnalysisResult } from '@/lib/types';
 import { useT } from '@/components/providers/AppProviders';
@@ -8,15 +8,20 @@ export const SummaryTab: React.FC<SummaryTabProps> = ({ current, onGetExports })
   const t = useT();
   const data = current.data;
   const baseSummary = data?.summary || '';
-  const [summaryLevel, setSummaryLevel] = useState<'detailed'|'short'|'bullet'>('detailed');
-  // Simple derived variants (placeholder for future backend support)
-  const summaryText = summaryLevel === 'short'
-    ? baseSummary.split(/(?<=\.)\s+/).slice(0,2).join(' ') || baseSummary
-    : summaryLevel === 'bullet'
-      ? baseSummary.split(/(?<=\.)\s+/).slice(0,6).map(s => '• ' + s.trim()).join('\n')
-      : baseSummary;
+  const summaryPoints = useMemo(() => data?.summaryPoints || [], [data?.summaryPoints]);
+  const [summaryLevel, setSummaryLevel] = useState<'detailed' | 'short' | 'bullet'>('detailed');
 
-  const exportDocx = React.useCallback(async () => {
+  const summaryText = useMemo(() => {
+    if (summaryLevel === 'bullet' && summaryPoints.length > 0) {
+      return summaryPoints.map(s => `• ${s.trim()}`).join('\n');
+    }
+    if (summaryLevel === 'short') {
+      return baseSummary.split(/(?<=\.)\s+/).slice(0, 2).join(' ') || baseSummary;
+    }
+    return baseSummary;
+  }, [summaryLevel, baseSummary, summaryPoints]);
+
+  const exportDocx = React. useCallback(async () => {
     try { await exportSummaryDocx(current, summaryText, data?.sentiment, t); }
     catch (e) { console.error('export docx failed', e); }
   }, [current, summaryText, data?.sentiment, t]);
@@ -40,10 +45,10 @@ export const SummaryTab: React.FC<SummaryTabProps> = ({ current, onGetExports })
         <div className="flex items-center gap-3 text-[11px]">
           <label className="flex items-center gap-1 font-medium text-slate-300">
             <span>{t('summaryLevel') || t('level')}</span>
-            <select value={summaryLevel} onChange={e=>setSummaryLevel(e.target.value as 'detailed'|'short'|'bullet')} className="bg-slate-800/70 border border-slate-600/60 rounded px-1 py-0.5 focus:outline-none">
-              <option value="detailed">{t('detailed')||'Detailed'}</option>
-              <option value="short">{t('short')||'Short'}</option>
-              <option value="bullet">{t('bullet')||'Bullets'}</option>
+            <select value={summaryLevel} onChange={e => setSummaryLevel(e.target.value as 'detailed' | 'short' | 'bullet')} className="bg-slate-800/70 border border-slate-600/60 rounded px-1 py-0.5 focus:outline-none">
+              <option value="detailed">{t('detailed') || 'Detailed'}</option>
+              <option value="short">{t('short') || 'Short'}</option>
+              {summaryPoints.length > 0 && <option value="bullet">{t('bullet') || 'Bullets'}</option>}
             </select>
           </label>
         </div>
@@ -57,10 +62,6 @@ export const SummaryTab: React.FC<SummaryTabProps> = ({ current, onGetExports })
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide border ${data.sentiment.toLowerCase().includes('pos') ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30' : data.sentiment.toLowerCase().includes('neg') ? 'bg-rose-500/15 text-rose-300 border-rose-400/30' : 'bg-slate-600/20 text-slate-300 border-slate-500/30'}`}>{data.sentiment}</span>
             )}
           </p>
-        </div>
-        <div className="flex gap-2 pt-2">
-          {/* replaced individual buttons by wrapper consumed by parent (kept for backward compatibility) */}
-          {/* The parent now can render ExportMenu; fallback simple buttons removed for cleaner UI */}
         </div>
       </section>
     </div>

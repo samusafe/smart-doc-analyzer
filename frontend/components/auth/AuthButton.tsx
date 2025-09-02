@@ -33,7 +33,7 @@ export function AuthButton() {
       </SignedIn>
       <SignedOut>
         <SignInButton mode="modal">
-          <button className="text-sm font-medium px-3 py-1 rounded-md border hover:bg-gray-50">Sign in</button>
+          <button className="text-sm font-medium px-3 py-1 rounded-md border">Sign in</button>
         </SignInButton>
       </SignedOut>
     </div>

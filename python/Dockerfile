@@ -3,16 +3,12 @@
 
 # Base stage with dependencies
 FROM python:3.11-slim AS base
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    NLTK_DATA=/usr/local/share/nltk_data
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential wget \
     && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN python -m spacy download en_core_web_sm \
-    && python -c "import nltk,os,pathlib; p=os.environ.get('NLTK_DATA','/usr/local/share/nltk_data'); pathlib.Path(p).mkdir(parents=True, exist_ok=True); [nltk.download(x, download_dir=p) for x in ['stopwords','punkt','punkt_tab']]"
-RUN chmod -R 755 "$NLTK_DATA"
 
 # Development stage with hot-reloading
 FROM base AS development

@@ -2,7 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { ReactNode, createContext, useContext, useState, useMemo, useEffect, useCallback } from "react";
-import { t as baseT, Locale, normalizeLocale, defaultLocale } from '@/i18n/messages';
+import { getMessages, Locale, normalizeLocale, defaultLocale } from '@/i18n/messages';
 
 interface TokenCtxValue { token?: string; setToken: (t?: string) => void }
 const TokenContext = createContext<TokenCtxValue>({ setToken: () => {} });
@@ -53,7 +53,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const t = useCallback((key: string, vars?: Record<string,string|number>) => baseT(lang, key, vars), [lang]);
+  // Preload messages for current lang and keep in state for synchronous access
+  const [dict, setDict] = useState<Record<string,string>>({});
+  useEffect(() => { (async () => { setDict(await getMessages(lang)); })(); }, [lang]);
+  const t = useCallback((key: string, vars?: Record<string,string|number>) => {
+    let str = dict[key] ?? key;
+    if (vars) for (const [k,v] of Object.entries(vars)) str = str.replace(new RegExp(`{${k}}`, 'g'), String(v));
+    return str;
+  }, [dict]);
 
   const tokenValue = useMemo(() => ({ token, setToken }), [token]);
 

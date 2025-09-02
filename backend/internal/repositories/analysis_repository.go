@@ -13,7 +13,7 @@ import (
 
 type AnalysisRepository interface {
 	InsertDocument(userID string, collectionID *int, fileName, fullText string, contentHash string) (int, error)
-	InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, batchID *string, batchSize *int) (int, error)
+	InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, summaryPoints []string, batchID *string, batchSize *int) (int, error)
 	FindDocument(userID string, collectionID *int, contentHash string) (int, error)
 	GetLatestAnalysisByDocument(userID string, documentID int) (*models.AnalysisDetail, error)
 	ListDocumentsByCollection(userID string, collectionID *int) ([]models.DocumentItem, error)
@@ -35,7 +35,7 @@ func (r *analysisRepository) InsertDocument(userID string, collectionID *int, fi
 	return id, err
 }
 
-func (r *analysisRepository) InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, batchID *string, batchSize *int) (int, error) {
+func (r *analysisRepository) InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, summaryPoints []string, batchID *string, batchSize *int) (int, error) {
 	var id int
 	clean := make([]string, 0, len(keywords))
 	for _, k := range keywords {
@@ -44,7 +44,7 @@ func (r *analysisRepository) InsertAnalysis(userID string, documentID int, summa
 			clean = append(clean, k)
 		}
 	}
-	if err := r.db.QueryRow(`INSERT INTO analyses(user_id, document_id, summary, keywords, sentiment, analysis_version, batch_id, batch_size) VALUES($1,$2,$3,$4,$5,1,$6,$7) RETURNING id`, userID, documentID, summary, pq.Array(clean), sentiment, batchID, batchSize).Scan(&id); err != nil {
+	if err := r.db.QueryRow(`INSERT INTO analyses(user_id, document_id, summary, keywords, sentiment, summary_points, analysis_version, batch_id, batch_size) VALUES($1,$2,$3,$4,$5,$6,1,$7,$8) RETURNING id`, userID, documentID, summary, pq.Array(clean), sentiment, pq.Array(summaryPoints), batchID, batchSize).Scan(&id); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -67,19 +67,20 @@ func (r *analysisRepository) FindDocument(userID string, collectionID *int, cont
 }
 
 func (r *analysisRepository) GetLatestAnalysisByDocument(userID string, documentID int) (*models.AnalysisDetail, error) {
-	q := `SELECT a.id, d.id, d.file_name, a.summary, a.sentiment, COALESCE(a.keywords, '{}'::text[]), d.collection_id, a.created_at, COALESCE(d.full_text,'') as full_text, a.analysis_version, a.batch_id, a.batch_size
+	q := `SELECT a.id, d.id, d.file_name, a.summary, a.sentiment, COALESCE(a.keywords, '{}'::text[]), d.collection_id, a.created_at, COALESCE(d.full_text,'') as full_text, a.analysis_version, a.batch_id, a.batch_size, COALESCE(a.summary_points, '{}'::text[])
 		FROM analyses a
 		JOIN documents d ON a.document_id = d.id AND a.user_id = d.user_id
 		WHERE a.user_id = $1 AND d.id = $2
 		ORDER BY a.created_at DESC LIMIT 1`
 	var detail models.AnalysisDetail
 	var colID sql.NullInt64
-	var keywords []string
-	if err := r.db.QueryRow(q, userID, documentID).Scan(&detail.AnalysisID, &detail.DocumentID, &detail.FileName, &detail.Summary, &detail.Sentiment, pq.Array(&keywords), &colID, &detail.CreatedAt, &detail.FullText, &detail.AnalysisVersion, &detail.BatchID, &detail.BatchSize); err != nil {
+	var keywords, summaryPoints []string
+	if err := r.db.QueryRow(q, userID, documentID).Scan(&detail.AnalysisID, &detail.DocumentID, &detail.FileName, &detail.Summary, &detail.Sentiment, pq.Array(&keywords), &colID, &detail.CreatedAt, &detail.FullText, &detail.AnalysisVersion, &detail.BatchID, &detail.BatchSize, pq.Array(&summaryPoints)); err != nil {
 		log.Printf("GetLatestAnalysisByDocument error user=%s doc=%d: %v", userID, documentID, err)
 		return nil, err
 	}
 	detail.Keywords = keywords
+	detail.SummaryPoints = summaryPoints
 	if colID.Valid {
 		v := int(colID.Int64)
 		detail.CollectionID = &v

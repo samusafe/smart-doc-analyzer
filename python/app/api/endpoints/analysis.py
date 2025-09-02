@@ -7,7 +7,7 @@ router = APIRouter()
 async def analyze_file(file: UploadFile = File(...)):
     """
     Endpoint to analyze a single uploaded file.
-    Extracts text and performs NLP analysis.
+    Extracts text and performs Keybert analysis.
     """
     raw_content = await file.read()
     filename = file.filename.lower()

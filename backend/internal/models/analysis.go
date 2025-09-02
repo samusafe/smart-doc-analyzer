@@ -2,10 +2,11 @@ package models
 
 // AnalysisResponse represents the response structure for document analysis.
 type AnalysisResponse struct {
-	Summary   string   `json:"summary"`
-	Keywords  []string `json:"keywords"`
-	Sentiment string   `json:"sentiment"`
-	FullText  string   `json:"fullText"`
+	Summary       string   `json:"summary"`
+	SummaryPoints []string `json:"summary_points"`
+	Keywords      []string `json:"keywords"`
+	Sentiment     string   `json:"sentiment"`
+	FullText      string   `json:"fullText"`
 }
 
 // AnalysisResult holds the outcome of a single file analysis.
@@ -27,12 +28,13 @@ type QuizResponse struct {
 	Quiz []QuizQuestion `json:"quiz"`
 }
 
-// AnalysisDetail now only contains fields actually used by latest-analysis endpoint.
+// AnalysisDetail contains fields used by latest-analysis endpoint.
 type AnalysisDetail struct {
 	AnalysisID      int      `json:"analysisId"`
 	DocumentID      int      `json:"documentId"`
 	FileName        string   `json:"fileName"`
 	Summary         string   `json:"summary"`
+	SummaryPoints   []string `json:"summaryPoints,omitempty"`
 	Sentiment       string   `json:"sentiment"`
 	Keywords        []string `json:"keywords"`
 	CollectionID    *int     `json:"collectionId,omitempty"`

@@ -151,9 +151,9 @@ func (s *analyzerService) analyzeSingleFile(ctx context.Context, fileHeader *mul
 	// Reuse path (only if a valid docID was found and existing analysis exists)
 	if docID, err := s.analysisRepo.FindDocument(userID, collectionID, contentHash); err == nil && docID > 0 {
 		if existing, err2 := s.analysisRepo.GetLatestAnalysisByDocument(userID, docID); err2 == nil && existing != nil {
-			_, _ = s.analysisRepo.InsertAnalysis(userID, docID, existing.Summary, existing.Keywords, existing.Sentiment, batchID, batchSize)
+			_, _ = s.analysisRepo.InsertAnalysis(userID, docID, existing.Summary, existing.Keywords, existing.Sentiment, existing.SummaryPoints, batchID, batchSize)
 			log.Info().Str("cid", cid).Str("file", fileHeader.Filename).Bool("reused", true).Dur("duration", time.Since(start)).Msg("analysis reused")
-			return models.AnalysisResult{FileName: fileHeader.Filename, Reused: true, Data: &models.AnalysisResponse{Summary: existing.Summary, Keywords: existing.Keywords, Sentiment: existing.Sentiment, FullText: existing.FullText}}
+			return models.AnalysisResult{FileName: fileHeader.Filename, Reused: true, Data: &models.AnalysisResponse{Summary: existing.Summary, Keywords: existing.Keywords, Sentiment: existing.Sentiment, FullText: existing.FullText, SummaryPoints: existing.SummaryPoints}}
 		}
 	}
 
@@ -175,10 +175,10 @@ func (s *analyzerService) analyzeSingleFile(ctx context.Context, fileHeader *mul
 		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "InternalError")}
 	}
 
-	analysisData := models.AnalysisResponse{Summary: out.Summary, Keywords: out.Keywords, Sentiment: out.Sentiment, FullText: out.FullText}
+	analysisData := models.AnalysisResponse{Summary: out.Summary, Keywords: out.Keywords, Sentiment: out.Sentiment, FullText: out.FullText, SummaryPoints: out.SummaryPoints}
 	if out.FullText != "" {
 		if docID, err := s.analysisRepo.InsertDocument(userID, collectionID, fileHeader.Filename, out.FullText, contentHash); err == nil {
-			_, _ = s.analysisRepo.InsertAnalysis(userID, docID, out.Summary, out.Keywords, out.Sentiment, batchID, batchSize)
+			_, _ = s.analysisRepo.InsertAnalysis(userID, docID, out.Summary, out.Keywords, out.Sentiment, out.SummaryPoints, batchID, batchSize)
 		}
 	}
 	log.Info().Str("cid", cid).Str("file", fileHeader.Filename).Bool("reused", false).Dur("duration", time.Since(start)).Msg("analysis complete")

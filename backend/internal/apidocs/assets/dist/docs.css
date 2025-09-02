@@ -1,0 +1,4 @@
+body{margin:0;background:#fafafa}
+/* Hide topbar (file input & explore) */
+.swagger-ui .topbar {display:none !important;}
+.swagger-ui .swagger-ui {margin-top:0}

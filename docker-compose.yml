@@ -31,6 +31,8 @@ services:
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL}
       - APP_VERSION=${APP_VERSION}
+      - SWAGGER_UI_VERSION=${SWAGGER_UI_VERSION}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
       - ./backend:/src
     depends_on:
@@ -48,7 +50,9 @@ services:
     ports:
       - "${PYTHON_PORT}:${PYTHON_PORT}"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SUMMARIZER_MODEL_NAME=${SUMMARIZER_MODEL_NAME}
+      - KEYBERT_MODEL_NAME=${KEYBERT_MODEL_NAME}
+      - QG_MODEL_NAME=${QG_MODEL_NAME}
     volumes:
       - ./python/app:/app/app
     depends_on:
@@ -67,7 +71,7 @@ services:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:${FRONTEND_PORT}
+      - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT}
       - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
     volumes:
@@ -109,6 +113,8 @@ services:
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL}
       - APP_VERSION=${APP_VERSION}
+      - SWAGGER_UI_VERSION=${SWAGGER_UI_VERSION}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     depends_on:
       db-prod:
         condition: service_healthy
@@ -124,7 +130,9 @@ services:
     ports:
       - "${PYTHON_PORT}:${PYTHON_PORT}"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SUMMARIZER_MODEL_NAME=${SUMMARIZER_MODEL_NAME}
+      - KEYBERT_MODEL_NAME=${KEYBERT_MODEL_NAME}
+      - QG_MODEL_NAME=${QG_MODEL_NAME}
     depends_on:
       db-prod:
         condition: service_healthy

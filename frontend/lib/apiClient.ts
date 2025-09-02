@@ -1,5 +1,6 @@
 import { buildAuthHeaders } from './utils';
 import { REQUEST_ID_HEADER } from './constants/constants';
+import { AnalysisResult, AnalysisDetail, Collection, DocumentItem } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -81,13 +82,13 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit & Ap
   return { payload: payload as T, correlationId: body?.correlationId || cid, response: res };
 }
 
-// Domain-specific helpers (typed minimal shapes)
-export interface AnalyzeResults { results: unknown[] }
-export interface CollectionsPayload { collections: unknown[] }
-export interface CollectionCreated { collection: unknown; message: string }
+// Domain-specific helpers
+export interface AnalyzeResults { results: AnalysisResult[] }
+export interface CollectionsPayload { collections: Collection[] }
+export interface CollectionCreated { collection: Collection; message: string }
 export interface MessagePayload { message: string }
-export interface ItemsPayload { items: unknown[]; total: number }
-export interface AnalysisPayload { analysis: unknown }
+export interface ItemsPayload { items: DocumentItem[]; total: number }
+export interface AnalysisPayload { analysis: AnalysisDetail }
 
 // Endpoint map (backend REST):
 // POST   /analyze (multipart)

@@ -2,6 +2,7 @@ export interface AnalysisResult {
   fileName: string;
   data?: {
     summary: string;
+    summaryPoints: string[];
     keywords: string[];
     sentiment: string;
     fullText: string;
@@ -28,6 +29,7 @@ export interface AnalysisDetail {
   documentId: number;
   fileName: string;
   summary: string;
+  summaryPoints: string[];
   sentiment: string;
   keywords: string[];
   collectionId?: number;

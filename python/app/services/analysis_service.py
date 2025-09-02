@@ -1,39 +1,26 @@
-import os
 from .text_processing import extract_text
 from .keywords_sentiment import analyze_sentiment, extract_keywords
 from .summarization import local_summarize, heuristic_summary
-from .models_loader import get_nlp
-
+import re
 
 def analyze_text(text: str) -> dict:
+    """
+    Analyzes the given text to extract sentiment, keywords, and a structured summary.
+    This version uses only local models to ensure zero cost and provides a more
+    study-friendly output.
+    """
     sentiment = analyze_sentiment(text)
     keywords = extract_keywords(text)
-
-    summary = ''
-    # Prefer OpenAI if key present
-    openai_key = os.getenv('OPENAI_API_KEY')
-    if openai_key:
-        try:
-            import openai  # type: ignore
-            openai.api_key = openai_key
-            resp = openai.ChatCompletion.create(
-                model='gpt-3.5-turbo',
-                messages=[
-                    {"role": "system", "content": "You summarize academic and technical documents."},
-                    {"role": "user", "content": f"Summarize:\n{text}"},
-                ],
-                temperature=0.5,
-                max_tokens=150,
-            )
-            summary = resp.choices[0].message['content'].strip()
-        except Exception as e:  # pragma: no cover
-            print(f"OpenAI summary failed: {e}")
-            summary = local_summarize(text) or heuristic_summary(text)
-    else:
-        summary = local_summarize(text) or heuristic_summary(text)
+    
+    # Generate summary using the local, improved summarization function
+    summary_paragraph = local_summarize(text) or heuristic_summary(text)
+    
+    # Generate bullet points from the summary paragraph by splitting it into sentences.
+    summary_points = [s.strip() for s in re.split(r'(?<=[.!?])\s+', summary_paragraph) if s.strip()]
 
     return {
-        'summary': summary,
+        'summary': summary_paragraph,
+        'summary_points': summary_points,
         'keywords': keywords,
         'sentiment': sentiment,
         'fullText': text,

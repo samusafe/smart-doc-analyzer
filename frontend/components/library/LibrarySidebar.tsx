@@ -52,7 +52,7 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
   }, [token, toast, lang, t]);
 
   useEffect(() => { fetchCollections(); }, [fetchCollections]);
-  useEffect(() => { // background revalidation
+  useEffect(() => {
     getCollectionsCached(token, lang, false, true).catch(()=>{});
   }, [token, lang]);
 

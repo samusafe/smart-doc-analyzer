@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -44,10 +43,10 @@ func SetupRouter() *gin.Engine {
 		c.Next()
 	})
 
-	// Correlation ID needs to run before logging to capture cid in logs
+	// Correlation ID
 	r.Use(middleware.CorrelationID())
 
-	// Request logging (after CID so we can log correlation id)
+	// Request logging
 	r.Use(func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
@@ -58,9 +57,13 @@ func SetupRouter() *gin.Engine {
 		if status >= 500 {
 			logEvt = log.Error()
 		}
+		path := c.FullPath()
+		if path == "" {
+			path = c.Request.URL.Path
+		}
 		logEvt.
 			Str("method", c.Request.Method).
-			Str("path", c.FullPath()).
+			Str("path", path).
 			Int("status", status).
 			Dur("latency", latency).
 			Str("cid", cid).
@@ -72,30 +75,12 @@ func SetupRouter() *gin.Engine {
 		log.Error().Err(err).Msg("error setting trusted proxies")
 	}
 
-	// Build allowed origins (frontend + python).
-	frontPort := os.Getenv("FRONTEND_PORT")
-	if frontPort == "" {
-		frontPort = "3000"
-	}
-	pyPort := os.Getenv("PYTHON_PORT")
-	if pyPort == "" {
-		pyPort = "8000"
-	}
-	allowedOrigins := []string{
-		"http://localhost:" + frontPort,
-		"http://127.0.0.1:" + frontPort,
-		"http://frontend:" + frontPort,
-		"http://localhost:" + pyPort,
-		"http://127.0.0.1:" + pyPort,
-		"http://python:" + pyPort,
-	}
-
 	// CORS (restricted)
 	corsCfg := cors.Config{
-		AllowOrigins:  allowedOrigins,
+		AllowOrigins:  config.AllowedOrigins,
 		AllowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:  []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders: []string{"Content-Length"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Accept", "Authorization", "Accept-Language", "X-Request-ID"},
+		ExposeHeaders: []string{"Content-Length", "X-Request-ID"},
 		MaxAge:        12 * time.Hour,
 	}
 	r.Use(cors.New(corsCfg))

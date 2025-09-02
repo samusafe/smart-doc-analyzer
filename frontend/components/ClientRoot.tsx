@@ -30,7 +30,6 @@ export function ClientRoot({ children }: { children: ReactNode }) {
   const lang = useAppLanguage();
   const t = useT();
 
-  // Update <html lang> attribute when language changes
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.lang = lang;

@@ -5,6 +5,7 @@ import { AnalysisResult, QuizQuestion, AnalysisDetail } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useFileQueue } from '@/hooks/useFileQueue';
 import { useAppLanguage, useT } from '@/components/providers/AppProviders';
+import { useAuth } from '@clerk/nextjs';
 
 interface UseAnalysisManagerArgs {
   token?: string;
@@ -12,6 +13,7 @@ interface UseAnalysisManagerArgs {
 }
 
 export function useAnalysisManager({ token, activeCollection }: UseAnalysisManagerArgs) {
+  const { isSignedIn } = useAuth();
   const { toast } = useToast();
   const { files, addFiles, replaceFiles, removeFile, clearFiles } = useFileQueue({ onWarn: (msg: string) => toast({ variant: msg.includes('limit') ? 'destructive' : 'warning', title: msg }) });
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
@@ -32,12 +34,10 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
   const lang = useAppLanguage();
   const t = useT();
 
-  // Persist index
   useEffect(() => {
     try { localStorage.setItem('analysis.currentIndex.v1', String(currentAnalysisIndex)); } catch { /* ignore */ }
   }, [currentAnalysisIndex]);
 
-  // Clamp index on results change or clear
   useEffect(() => {
     if (!analysisResults.length) {
       if (currentAnalysisIndex !== 0) setCurrentAnalysisIndex(0);
@@ -48,7 +48,6 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
     }
   }, [analysisResults.length, currentAnalysisIndex]);
 
-  // simple debounce hook (local to file to avoid new file overhead now)
   type AnyFunc = (...args: unknown[]) => void;
   function useDebouncedCallback<T extends AnyFunc>(fn: T, delay: number) {
     const timer = useRef<number | null>(null);
@@ -59,6 +58,10 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
   }
 
   const analyze = useCallback(async () => {
+    if (!isSignedIn) {
+      toast({ variant: 'destructive', title: t('notLoggedIn') });
+      return;
+    }
     if (!files.length) return;
     setIsLoading(true);
     setAnalysisResults([]);
@@ -81,11 +84,15 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
     } finally {
       setIsLoading(false);
     }
-  }, [files, activeCollection, toast, token, lang, t]);
+  }, [isSignedIn, files, activeCollection, toast, token, lang, t]);
 
   const debouncedAnalyze = useDebouncedCallback(analyze, 300);
 
   const loadExistingDocuments = useCallback(async (docIds: number | number[]) => {
+    if (!isSignedIn) {
+      toast({ variant: 'destructive', title: t('notLoggedIn') });
+      return [] as AnalysisResult[];
+    }
     const ids = Array.isArray(docIds) ? docIds : [docIds];
     if (!ids.length) return [] as AnalysisResult[];
     setIsLoading(true);
@@ -104,7 +111,7 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
       if (successes.length) {
         const mapped: AnalysisResult[] = successes.map(detail => ({
           fileName: detail.fileName,
-          data: { summary: detail.summary, keywords: detail.keywords, sentiment: detail.sentiment, fullText: detail.fullText },
+          data: { summary: detail.summary, summaryPoints: detail.summaryPoints, keywords: detail.keywords, sentiment: detail.sentiment, fullText: detail.fullText },
         }));
         const pseudoFiles: File[] = successes.map(d => new File([d.fullText || ''], d.fileName || 'document.txt', { type: 'text/plain' }));
         replaceFiles(pseudoFiles);
@@ -124,9 +131,13 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
     } finally {
       setIsLoading(false);
     }
-  }, [token, toast, replaceFiles, lang, t]);
+  }, [isSignedIn, token, toast, replaceFiles, lang, t]);
 
   const takeQuiz = useCallback(async () => {
+    if (!isSignedIn) {
+      toast({ variant: 'destructive', title: t('notLoggedIn') });
+      return;
+    }
     const currentResult = analysisResults[currentAnalysisIndex];
     if (!currentResult?.data?.fullText) return;
     setIsQuizLoading(true);
@@ -143,7 +154,7 @@ export function useAnalysisManager({ token, activeCollection }: UseAnalysisManag
     } finally {
       setIsQuizLoading(false);
     }
-  }, [analysisResults, currentAnalysisIndex, toast, token, lang, t]);
+  }, [isSignedIn, analysisResults, currentAnalysisIndex, toast, token, lang, t]);
 
   const submitQuiz = useCallback((answers: string[]) => {
     const score = quizQuestions.reduce((acc, q, i) => acc + (q.answer === answers[i] ? 1 : 0), 0);
