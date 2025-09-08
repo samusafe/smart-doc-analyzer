@@ -1,89 +1,91 @@
 "use client";
 
-import { useState, useEffect, useCallback, FormEvent, useRef } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createCollection, deleteCollection } from "@/api/collections";
 import { Collection, DocumentItem } from "@/lib/types";
 import { FolderClosedIcon, FolderOpenIcon, ChevronLeftIcon } from "@/components/icons";
 import { RefreshCw } from "lucide-react";
-import { useAppLanguage, useT } from "@/components/providers/AppProviders";
+import { useAppLanguage, useT, useAuthToken } from "@/components/providers/AppProviders";
 import { listDocumentsInCollection } from "@/api/documents";
-import { getCollectionsCached, invalidateCollectionsCache } from '@/lib/cache';
+import { useDataStore } from '@/lib/store/data';
 
 interface LibrarySidebarProps {
   onSelectCollection: (id: string | null, name?: string | null) => void;
   activeCollectionId: string | null;
-  token?: string;
 }
 
-export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }: LibrarySidebarProps) {
+export function LibrarySidebar({ onSelectCollection, activeCollectionId }: LibrarySidebarProps) {
   const { toast } = useToast();
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [docsLoading, setDocsLoading] = useState<Record<number, boolean>>({});
   const [collectionDocs, setCollectionDocs] = useState<Record<number, DocumentItem[]>>({});
-  const initialLoadRef = useRef(true);
   const lang = useAppLanguage();
   const t = useT();
+  const authToken = useAuthToken();
 
-  const fetchCollections = useCallback(async () => {
-    setLoading(true);
-    if (initialLoadRef.current) {
-      toast({ title: t('loading') });
-    }
-    try {
-      const data = await getCollectionsCached(token, lang);
-      setCollections(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setCollections([]);
-      toast({ variant: "destructive", title: t('failedLoadCollections'), description: e instanceof Error ? e.message : undefined });
-    } finally {
-      setLoading(false);
-      initialLoadRef.current = false;
-    }
-  }, [token, toast, lang, t]);
+  const {
+    collections,
+    loadingCollections,
+    errorCollections,
+    fetchCollections,
+    deleteCollection,
+    createCollection,
+  } = useDataStore();
 
-  useEffect(() => { fetchCollections(); }, [fetchCollections]);
   useEffect(() => {
-    getCollectionsCached(token, lang, false, true).catch(()=>{});
-  }, [token, lang]);
+    if (authToken && collections.length === 0) {
+      fetchCollections(authToken, lang).catch((err) => {
+        toast({ variant: "destructive", title: t('failedLoadCollections'), description: err.message });
+      });
+    }
+  }, [authToken, collections.length, fetchCollections, lang, toast, t]);
 
-  const resetAdd = () => { setAdding(false); setNewName(""); setError(null); };
+  const resetAdd = () => { setAdding(false); setNewName(""); setFormError(null); };
 
-  const handleCreate = useCallback(async (e: FormEvent) => {
+  const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
+    if (!authToken) return;
     const trimmed = newName.trim();
-    if (!trimmed) { setError(t('nameRequired')); return; }
+    if (!trimmed) { setFormError(t('nameRequired')); return; }
     toast({ title: t('creatingCollection') });
     try {
-      const created = await createCollection(trimmed, token, lang);
-      setCollections(prev => [created, ...prev]);
+      await createCollection(trimmed, authToken, lang);
       toast({ variant: "success", title: t('collectionCreated') });
       resetAdd();
     } catch (e) {
       const msg = e instanceof Error ? e.message : t('failedCreateCollection');
-      setError(msg);
+      setFormError(msg);
       toast({ variant: "destructive", title: msg });
     }
-  }, [newName, token, toast, lang, t]);
+  };
 
   const handleRemove = async (id: number) => {
+    if (!authToken) return;
+    // Basic confirmation, can be replaced with a modal
+    if (!window.confirm(t('confirmRemoveCollection'))) return;
     toast({ title: t('removingCollection') });
     try {
-      await deleteCollection(id, token, lang);
-      setCollections(prev => prev.filter(c => c.id !== id));
+      await deleteCollection(id, authToken, lang);
       if (activeCollectionId === String(id)) onSelectCollection(null, null);
       toast({ variant: "success", title: t('collectionRemoved') });
     } catch (e) {
-      toast({ variant: "destructive", title: e instanceof Error ? e.message : t('failedRemoveCollection') });
+      const error = e instanceof Error ? e.message : t('failedRemoveCollection');
+      toast({ variant: "destructive", title: error });
+    }
+  };
+
+  const handleRefresh = () => {
+    if (authToken) {
+      fetchCollections(authToken, lang).catch((err) => {
+        toast({ variant: "destructive", title: t('failedLoadCollections'), description: err.message });
+      });
     }
   };
 
@@ -93,7 +95,8 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
     if (willOpen && !collectionDocs[col.id] && col.documents > 0) {
       setDocsLoading(d => ({ ...d, [col.id]: true }));
       try {
-        const res = await listDocumentsInCollection(col.id, { token, lang });
+        if (!authToken) throw new Error(t('notLoggedIn'));
+        const res = await listDocumentsInCollection(col.id, { token: authToken, lang });
         setCollectionDocs(d => ({ ...d, [col.id]: res.items }));
       } catch {
         toast({ variant: 'destructive', title: t('failedLoadDocuments') });
@@ -108,8 +111,8 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t('library')}</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => { invalidateCollectionsCache(); fetchCollections(); }} aria-label={t('refreshCollections')} className="h-8 w-8 flex items-center justify-center rounded-md border hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition relative disabled:opacity-50" disabled={loading}>
-            <RefreshCw className={cn("h-4 w-4", loading && "opacity-60")}/>
+          <button onClick={handleRefresh} aria-label={t('refreshCollections')} className="h-8 w-8 flex items-center justify-center rounded-md border hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition relative disabled:opacity-50" disabled={loadingCollections}>
+            <RefreshCw className={cn("h-4 w-4", loadingCollections && "animate-spin")}/>
           </button>
           {!adding && (
             <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => setAdding(true)} aria-label={t('creatingCollection')}>+ {t('new')}</Button>
@@ -118,12 +121,12 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
       </div>
       {adding && (
         <form onSubmit={handleCreate} className="flex items-center gap-2">
-          <input autoFocus value={newName} onChange={e => { setNewName(e.target.value); setError(null); }} placeholder={t('collectionName')} aria-label={t('collectionName')} className="flex-1 rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input autoFocus value={newName} onChange={e => { setNewName(e.target.value); setFormError(null); }} placeholder={t('collectionName')} aria-label={t('collectionName')} className="flex-1 rounded-md border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           <Button size="sm" type="submit" className="cursor-pointer">{t('add')}</Button>
           <button type="button" onClick={resetAdd} aria-label={t('cancel')} className="h-8 w-8 flex items-center justify-center rounded-md border hover:bg-gray-50 text-gray-500 hover:text-gray-700"><X className="h-4 w-4" /></button>
         </form>
       )}
-      {error && <p role="alert" className="text-xs text-red-600 -mt-1">{error}</p>}
+      {formError && <p role="alert" className="text-xs text-red-600 -mt-1">{formError}</p>}
 
       {/* Breadcrumb / navigation */}
       <div className="flex items-center gap-2 text-sm font-medium text-slate-300" aria-label="Breadcrumb navigation">
@@ -148,7 +151,7 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
         )}
       </div>
 
-      {loading && !collections.length && (
+      {(loadingCollections && collections.length === 0) && (
         <div className="space-y-2" aria-label={t('loading')}>
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -158,8 +161,9 @@ export function LibrarySidebar({ onSelectCollection, activeCollectionId, token }
           ))}
         </div>
       )}
+      {errorCollections && <p className="text-xs text-red-500 p-4">{errorCollections}</p>}
       <nav className="flex flex-col gap-1 overflow-y-auto" aria-label="Collections list">
-        {!loading && collections.map(col => {
+        {!loadingCollections && collections.map(col => {
           const safeId = col.id;
           const isActive = String(safeId) === activeCollectionId;
           const name = col.name || t('unnamed');

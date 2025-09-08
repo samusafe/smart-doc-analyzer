@@ -1,6 +1,7 @@
 'use client';
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import { ReactNode, createContext, useContext, useState, useMemo, useEffect, useCallback } from "react";
 import { getMessages, Locale, normalizeLocale, defaultLocale } from '@/i18n/messages';
 
@@ -65,7 +66,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const tokenValue = useMemo(() => ({ token, setToken }), [token]);
 
   return (
-    <ClerkProvider dynamic={true} publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider
+      dynamic={true}
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: dark,
+        variables: { colorPrimary: '#6366f1' }
+      }}
+    >
       <TokenContext.Provider value={tokenValue}>
         <LangContext.Provider value={{ lang, setLang, t }}>{children}</LangContext.Provider>
       </TokenContext.Provider>

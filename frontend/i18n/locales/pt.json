@@ -36,6 +36,7 @@
   "selectDocumentHint": "Selecione um documento para carregar a última análise",
   "saveToCollection": "Guardar na coleção",
   "savedTo": "Guardado em",
+  "failedSaveToCollection": "Falha ao guardar na coleção",
   "dragDrop": "Arraste e largue ficheiros aqui",
   "orBrowse": "ou clique para procurar (máx 10)",
   "clear": "Limpar",
@@ -114,5 +115,7 @@
   "dash": "—",
   "noNotesAddFirst": "Sem notas ainda. Vai ao separador Texto para adicionar a primeira.",
   "exportSuccess": "Exportação concluída",
-  "exportFailed": "Falha na exportação"
+  "exportFailed": "Falha na exportação",
+  "addToCollection": "Adicionar à Coleção",
+  "selectCollectionPrompt": "Por favor, selecione uma coleção para adicionar o documento."
 }

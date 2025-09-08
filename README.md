@@ -1,5 +1,3 @@
-# Smart Document Analyzer
-
 <p align="center">
   <img src="./.github/assets/smart-doc-analyzer.png" alt="smart-doc-analyzer" width="100% />
 </p>

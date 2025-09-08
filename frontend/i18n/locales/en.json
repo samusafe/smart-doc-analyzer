@@ -36,6 +36,7 @@
   "selectDocumentHint": "Select a document to load its latest analysis",
   "saveToCollection": "Save to collection",
   "savedTo": "Saved to",
+  "failedSaveToCollection": "Failed to save to collection",
   "dragDrop": "Drag & drop files here",
   "orBrowse": "or click to browse (max 10)",
   "clear": "Clear",
@@ -114,5 +115,7 @@
   "dash": "—",
   "noNotesAddFirst": "No notes yet. Switch to the text tab to add your first note.",
   "exportSuccess": "Export completed",
-  "exportFailed": "Export failed"
+  "exportFailed": "Export failed",
+  "addToCollection": "Add to Collection",
+  "selectCollectionPrompt": "Please select a collection to add the document to."
 }

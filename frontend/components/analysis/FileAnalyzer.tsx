@@ -14,7 +14,7 @@ export default function FileAnalyzer() {
   const token = useAuthToken();
   const { toast } = useToast();
   const [activeCollection, setActiveCollection] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const {
     files,
@@ -77,7 +77,6 @@ export default function FileAnalyzer() {
             </main>
             <div className="mt-8">
               <ExplorerGrid
-                token={token}
                 onSelectDocument={async (docId) => {
                   try {
                     await loadExistingDocuments(docId);

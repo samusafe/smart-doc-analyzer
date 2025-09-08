@@ -18,7 +18,7 @@ services:
 
   backend-dev:
     profiles: ["development"]
-    image: docanalyzer-backend-dev:1.0.0
+    image: docanalyzer-backend-dev:1.25-alpine
     build:
       context: ./backend
       target: development
@@ -43,7 +43,7 @@ services:
 
   python-dev:
     profiles: ["development"]
-    image: docanalyzer-python-dev:1.0.0
+    image: docanalyzer-python-dev:3.11-slim
     build:
       context: ./python
       target: development
@@ -61,7 +61,7 @@ services:
 
   frontend-dev:
     profiles: ["development"]
-    image: docanalyzer-frontend-dev:1.0.0
+    image: docanalyzer-frontend-dev:18-alpine
     build:
       context: ./frontend
       target: development
@@ -100,7 +100,7 @@ services:
 
   backend-prod:
     profiles: ["production"]
-    image: docanalyzer-backend-prod:1.0.0
+    image: docanalyzer-backend-prod:1.25-alpine
     build:
       context: ./backend
       target: production
@@ -123,7 +123,7 @@ services:
 
   python-prod:
     profiles: ["production"]
-    image: docanalyzer-python-prod:1.0.0
+    image: docanalyzer-python-prod:3.11-slim
     build:
       context: ./python
       target: production
@@ -139,7 +139,7 @@ services:
 
   frontend-prod:
     profiles: ["production"]
-    image: docanalyzer-frontend-prod:1.0.0
+    image: docanalyzer-frontend-prod:18-alpine
     build:
       context: ./frontend
       target: production
