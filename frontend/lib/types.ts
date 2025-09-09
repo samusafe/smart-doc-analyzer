@@ -13,17 +13,6 @@ export interface AnalysisResult {
   batchSize?: number;
 }
 
-export interface QuizQuestion {
-  question: string;
-  answer: string;
-  options?: string[];
-}
-
-export interface QuizResponse {
-  quiz: QuizQuestion[];
-}
-
-// Minimal detail type for latest-analysis endpoint
 export interface AnalysisDetail {
   analysisId: number;
   documentId: number;
@@ -37,6 +26,39 @@ export interface AnalysisDetail {
   batchId?: string;
   batchSize?: number;
   fullText: string;
+}
+
+export type AnalyzedItem = {
+  id?: number;
+  fileName: string;
+  status: 'pending' | 'analyzed' | 'error' | 'reused';
+  analysis?: AnalysisResult['data'];
+  reused?: boolean;
+  batchId?: string;
+  batchSize?: number;
+  error?: string;
+};
+
+export function mapResultToItem(r: AnalysisResult): AnalyzedItem {
+  return {
+    fileName: r.fileName,
+    status: r.error ? 'error' : r.reused ? 'reused' : 'analyzed',
+    analysis: r.data,
+    reused: r.reused,
+    batchId: r.batchId,
+    batchSize: r.batchSize,
+    error: r.error,
+  };
+}
+
+export interface QuizQuestion {
+  question: string;
+  answer: string;
+  options?: string[];
+}
+
+export interface QuizResponse {
+  quiz: QuizQuestion[];
 }
 
 export interface Collection {

@@ -18,14 +18,14 @@ import (
 
 type mockAnalysisRepo2 struct {
 	latestFn       func(userID string, documentID int) (*models.AnalysisDetail, error)
-	listAllFn      func(userID string) ([]models.DocumentItem, error)
+	listAllFn      func(userID string, limit, offset int) ([]models.DocumentItem, int, error)
 	updateDocColFn func(userID string, docID int, colID int) error
 }
 
 func (m *mockAnalysisRepo2) InsertDocument(string, *int, string, string, string) (int, error) {
 	return 0, nil
 }
-func (m *mockAnalysisRepo2) InsertAnalysis(string, int, string, []string, string, *string, *int) (int, error) {
+func (m *mockAnalysisRepo2) InsertAnalysis(string, int, string, []string, string, []string, *string, *int) (int, error) {
 	return 0, nil
 }
 func (m *mockAnalysisRepo2) FindDocument(string, *int, string) (int, error) { return 0, nil }
@@ -35,8 +35,8 @@ func (m *mockAnalysisRepo2) GetLatestAnalysisByDocument(userID string, documentI
 func (m *mockAnalysisRepo2) ListDocumentsByCollection(string, *int) ([]models.DocumentItem, error) {
 	return nil, nil
 }
-func (m *mockAnalysisRepo2) ListAllDocuments(userID string) ([]models.DocumentItem, error) {
-	return m.listAllFn(userID)
+func (m *mockAnalysisRepo2) ListAllDocuments(userID string, limit, offset int) ([]models.DocumentItem, int, error) {
+	return m.listAllFn(userID, limit, offset)
 }
 func (m *mockAnalysisRepo2) UpdateDocumentCollection(userID string, docID int, colID int) error {
 	return m.updateDocColFn(userID, docID, colID)
@@ -108,18 +108,28 @@ func TestAnalysisHistory_GetLatest_Success(t *testing.T) {
 
 func TestAnalysisHistory_ListAll_Success(t *testing.T) {
 	items := []models.DocumentItem{{ID: 1, FileName: "a"}, {ID: 2, FileName: "b"}}
-	aRepo := &mockAnalysisRepo2{listAllFn: func(string) ([]models.DocumentItem, error) { return items, nil }}
+	aRepo := &mockAnalysisRepo2{listAllFn: func(string, int, int) ([]models.DocumentItem, int, error) {
+		return items, len(items), nil
+	}}
 	h := handlers.NewAnalysisHistoryHandler(aRepo, &mockCollectionsRepo2{})
 	c, w := newHistoryContext()
-	c.Request = httptest.NewRequest(http.MethodGet, "/documents", nil)
+	c.Request = httptest.NewRequest(http.MethodGet, "/documents?page=1&limit=10", nil)
 	h.ListAllDocuments(c)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200 got %d", w.Code)
 	}
 	var env envWrapper
 	decodeEnv(t, w, &env)
-	if env.Data["total"].(float64) != 2 {
-		t.Fatalf("expected total 2")
+
+	// Check if 'documents' key exists and is a map
+	data, ok := env.Data["documents"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected 'documents' to be a map in the response data")
+	}
+
+	// Check total
+	if total, ok := data["total"].(float64); !ok || total != 2 {
+		t.Fatalf("expected total 2, got %v", data["total"])
 	}
 }
 

@@ -1,0 +1,17 @@
+{
+  "InvalidRequest": "Pedido inválido",
+  "InternalError": "Erro interno do servidor",
+  "Unauthorized": "Não autorizado",
+  "NotFound": "Recurso não encontrado",
+  "TooManyRequests": "Muitos pedidos",
+  "UnsupportedFileType": "Tipo de ficheiro não suportado",
+  "FileLimitExceeded": "Pode carregar no máximo 10 ficheiros de cada vez.",
+  "PythonServiceUnavailable": "Não foi possível contactar o serviço de análise. Tente novamente mais tarde.",
+  "CollectionCreated": "Coleção criada com sucesso.",
+  "CollectionDeleted": "Coleção removida com sucesso.",
+  "CollectionExists": "Já existe uma coleção com esse nome.",
+  "CollectionInvalidName": "Nome de coleção inválido.",
+  "DocumentAlreadyInCollection": "Documento já está nesta coleção.",
+  "DocumentDuplicate": "Documento duplicado na coleção de destino.",
+  "DocumentSaved": "Documento adicionado à coleção."
+}

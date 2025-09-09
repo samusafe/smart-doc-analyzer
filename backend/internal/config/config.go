@@ -39,6 +39,7 @@ var (
 	SupportedLanguages = []string{"en", "pt"}
 	SupportedFileTypes = []string{".txt", ".md", ".pdf", ".docx"}
 	AllowedOrigins     = loadAllowedOrigins()
+	AllowedPageLimits  = []int{10, 25, 50}
 )
 
 func loadAllowedOrigins() []string {

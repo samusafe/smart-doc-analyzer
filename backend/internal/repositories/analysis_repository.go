@@ -17,7 +17,7 @@ type AnalysisRepository interface {
 	FindDocument(userID string, collectionID *int, contentHash string) (int, error)
 	GetLatestAnalysisByDocument(userID string, documentID int) (*models.AnalysisDetail, error)
 	ListDocumentsByCollection(userID string, collectionID *int) ([]models.DocumentItem, error)
-	ListAllDocuments(userID string) ([]models.DocumentItem, error)
+	ListAllDocuments(userID string, limit, offset int) ([]models.DocumentItem, int, error)
 	UpdateDocumentCollection(userID string, documentID int, collectionID int) error
 }
 
@@ -122,15 +122,22 @@ func (r *analysisRepository) ListDocumentsByCollection(userID string, collection
 	return out, nil
 }
 
-func (r *analysisRepository) ListAllDocuments(userID string) ([]models.DocumentItem, error) {
+func (r *analysisRepository) ListAllDocuments(userID string, limit, offset int) ([]models.DocumentItem, int, error) {
+	var total int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM documents WHERE user_id=$1`, userID).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	rows, err := r.db.Query(`SELECT d.id, d.file_name, COALESCE(COUNT(a.id),0) as analyses_count, COALESCE(MAX(a.created_at)::text,'') as last_at, d.collection_id
 		FROM documents d
 		LEFT JOIN analyses a ON a.document_id = d.id AND a.user_id = d.user_id
 		WHERE d.user_id=$1
 		GROUP BY d.id
-		ORDER BY last_at DESC NULLS LAST, d.id DESC`, userID)
+		ORDER BY last_at DESC NULLS LAST, d.id DESC
+		LIMIT $2 OFFSET $3`, userID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	var out []models.DocumentItem
@@ -139,7 +146,7 @@ func (r *analysisRepository) ListAllDocuments(userID string) ([]models.DocumentI
 		var lastAt string
 		var colID sql.NullInt64
 		if err := rows.Scan(&it.ID, &it.FileName, &it.AnalysesCount, &lastAt, &colID); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		it.LastAnalysisAt = lastAt
 		if colID.Valid {
@@ -148,7 +155,7 @@ func (r *analysisRepository) ListAllDocuments(userID string) ([]models.DocumentI
 		}
 		out = append(out, it)
 	}
-	return out, nil
+	return out, total, nil
 }
 
 func (r *analysisRepository) UpdateDocumentCollection(userID string, documentID int, collectionID int) error {

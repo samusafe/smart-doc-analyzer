@@ -10,7 +10,7 @@
   <a href="https://github.com/samusafe/smart-doc-analyzer/stargazers"><img src="https://img.shields.io/github/stars/samusafe/smart-doc-analyzer?style=flat-square" alt="Stars" /></a>
   <a href="https://github.com/samusafe/smart-doc-analyzer/issues"><img src="https://img.shields.io/github/issues/samusafe/smart-doc-analyzer?style=flat-square" alt="Issues" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/samusafe/smart-doc-analyzer?style=flat-square" alt="License" /></a>
-  <img src="https://img.shields.io/badge/Go-1.23-blue?style=flat-square" alt="Go" />
+  <img src="https://img.shields.io/badge/Go-1.25-blue?style=flat-square" alt="Go" />
   <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square" alt="React" />
   <img src="https://img.shields.io/badge/i18n-EN%20%2F%20PT-green?style=flat-square" alt="i18n" />

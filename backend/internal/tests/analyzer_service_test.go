@@ -21,13 +21,14 @@ type mockRepo struct {
 	latest              *models.AnalysisDetail
 	insertDocCalls      int
 	insertAnalysisCalls int
+	listAllFn           func(userID string, limit, offset int) ([]models.DocumentItem, int, error)
 }
 
 func (m *mockRepo) InsertDocument(userID string, collectionID *int, fileName, fullText string, contentHash string) (int, error) {
 	m.insertDocCalls++
 	return 101, nil
 }
-func (m *mockRepo) InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, batchID *string, batchSize *int) (int, error) {
+func (m *mockRepo) InsertAnalysis(userID string, documentID int, summary string, keywords []string, sentiment string, summaryPoints []string, batchID *string, batchSize *int) (int, error) {
 	m.insertAnalysisCalls++
 	return 201, nil
 }
@@ -40,7 +41,12 @@ func (m *mockRepo) GetLatestAnalysisByDocument(userID string, documentID int) (*
 func (m *mockRepo) ListDocumentsByCollection(userID string, collectionID *int) ([]models.DocumentItem, error) {
 	return nil, nil
 }
-func (m *mockRepo) ListAllDocuments(userID string) ([]models.DocumentItem, error) { return nil, nil }
+func (m *mockRepo) ListAllDocuments(userID string, limit, offset int) ([]models.DocumentItem, int, error) {
+	if m.listAllFn != nil {
+		return m.listAllFn(userID, limit, offset)
+	}
+	return nil, 0, nil
+}
 func (m *mockRepo) UpdateDocumentCollection(userID string, documentID int, collectionID int) error {
 	return nil
 }

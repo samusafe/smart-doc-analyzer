@@ -11,19 +11,15 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/samusafe/genericapi/internal/config"
 	"github.com/samusafe/genericapi/internal/database"
+	"github.com/samusafe/genericapi/internal/i18n"
 	"github.com/samusafe/genericapi/internal/logging"
 	"github.com/samusafe/genericapi/internal/routes"
 )
 
-// @title Doc-Analyser API
-// @version 1.0
-// @description API for document analysis, collections management and quiz generation.
-// @BasePath /
-// @schemes http
-// @produce json
 // @consumes json
 func main() {
 	logging.Init()
+	i18n.Init()
 
 	start := time.Now()
 	if err := database.Connect(); err != nil {

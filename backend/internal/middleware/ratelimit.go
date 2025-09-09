@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/samusafe/genericapi/internal/config"
 	"github.com/samusafe/genericapi/internal/utils"
@@ -12,8 +14,8 @@ func RateLimiter() gin.HandlerFunc {
 	limiter := rate.NewLimiter(rate.Every(config.RateLimitInterval), config.RateLimitBurst)
 	return func(c *gin.Context) {
 		if !limiter.Allow() {
-			lang := c.GetString("lang")
-			c.AbortWithStatusJSON(utils.StatusTooManyRequests, gin.H{"message": utils.GetMessage(lang, "TooManyRequests")})
+			utils.GinMsg(c, http.StatusTooManyRequests, "TooManyRequests")
+			c.Abort()
 			return
 		}
 		c.Next()

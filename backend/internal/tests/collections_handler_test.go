@@ -41,7 +41,7 @@ type mockAnalysisRepo struct {
 func (m *mockAnalysisRepo) InsertDocument(string, *int, string, string, string) (int, error) {
 	return 0, nil
 }
-func (m *mockAnalysisRepo) InsertAnalysis(string, int, string, []string, string, *string, *int) (int, error) {
+func (m *mockAnalysisRepo) InsertAnalysis(string, int, string, []string, string, []string, *string, *int) (int, error) {
 	return 0, nil
 }
 func (m *mockAnalysisRepo) FindDocument(string, *int, string) (int, error) { return 0, nil }
@@ -51,8 +51,10 @@ func (m *mockAnalysisRepo) GetLatestAnalysisByDocument(string, int) (*models.Ana
 func (m *mockAnalysisRepo) ListDocumentsByCollection(userID string, collectionID *int) ([]models.DocumentItem, error) {
 	return m.listDocsByColFn(userID, collectionID)
 }
-func (m *mockAnalysisRepo) ListAllDocuments(string) ([]models.DocumentItem, error) { return nil, nil }
-func (m *mockAnalysisRepo) UpdateDocumentCollection(string, int, int) error        { return nil }
+func (m *mockAnalysisRepo) ListAllDocuments(userID string, limit, offset int) ([]models.DocumentItem, int, error) {
+	return nil, 0, nil
+}
+func (m *mockAnalysisRepo) UpdateDocumentCollection(string, int, int) error { return nil }
 
 // helper to create gin context
 func newTestContext() (*gin.Context, *httptest.ResponseRecorder) {

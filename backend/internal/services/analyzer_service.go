@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/samusafe/genericapi/internal/config"
 	"github.com/samusafe/genericapi/internal/httpclient"
+	"github.com/samusafe/genericapi/internal/i18n"
 	"github.com/samusafe/genericapi/internal/models"
 	"github.com/samusafe/genericapi/internal/repositories"
 	"github.com/samusafe/genericapi/internal/utils"
@@ -132,20 +133,20 @@ func (s *analyzerService) analyzeSingleFile(ctx context.Context, fileHeader *mul
 	ext := strings.ToLower(path.Ext(fileHeader.Filename))
 	if !slices.Contains(config.SupportedFileTypes, ext) {
 		log.Info().Str("cid", cid).Str("file", fileHeader.Filename).Str("ext", ext).Msg("skip unsupported file type")
-		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "UnsupportedFileType")}
+		return models.AnalysisResult{FileName: fileHeader.Filename, Error: i18n.GetMessage(lang, "UnsupportedFileType")}
 	}
 
 	f, err := s.fileOpener.Open(fileHeader)
 	if err != nil {
 		log.Error().Str("cid", cid).Str("file", fileHeader.Filename).Err(err).Msg("open file error")
-		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "InternalError")}
+		return models.AnalysisResult{FileName: fileHeader.Filename, Error: i18n.GetMessage(lang, "InternalError")}
 	}
 	defer f.Close()
 
 	origBytes, contentHash, err := bufferAndHash(f)
 	if err != nil {
 		log.Error().Str("cid", cid).Str("file", fileHeader.Filename).Err(err).Msg("hash file error")
-		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "InternalError")}
+		return models.AnalysisResult{FileName: fileHeader.Filename, Error: i18n.GetMessage(lang, "InternalError")}
 	}
 
 	// Reuse path (only if a valid docID was found and existing analysis exists)
@@ -165,14 +166,14 @@ func (s *analyzerService) analyzeSingleFile(ctx context.Context, fileHeader *mul
 			errType = "python_bad_status"
 		}
 		log.Error().Str("cid", cid).Str("file", fileHeader.Filename).Str("errorType", errType).Err(err).Dur("duration", time.Since(start)).Msg("python analyze error")
-		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "PythonServiceUnavailable")}
+		return models.AnalysisResult{FileName: fileHeader.Filename, Error: i18n.GetMessage(lang, "PythonServiceUnavailable")}
 	}
 	defer resp.Body.Close()
 
 	var out models.AnalysisResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		log.Error().Str("cid", cid).Str("file", fileHeader.Filename).Err(err).Dur("duration", time.Since(start)).Msg("decode python response error")
-		return models.AnalysisResult{FileName: fileHeader.Filename, Error: utils.GetMessage(lang, "InternalError")}
+		return models.AnalysisResult{FileName: fileHeader.Filename, Error: i18n.GetMessage(lang, "InternalError")}
 	}
 
 	analysisData := models.AnalysisResponse{Summary: out.Summary, Keywords: out.Keywords, Sentiment: out.Sentiment, FullText: out.FullText, SummaryPoints: out.SummaryPoints}

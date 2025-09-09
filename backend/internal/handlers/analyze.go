@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/samusafe/genericapi/internal/config"
+	"github.com/samusafe/genericapi/internal/i18n"
 	"github.com/samusafe/genericapi/internal/services"
 	"github.com/samusafe/genericapi/internal/utils"
 )
@@ -34,7 +35,6 @@ func (h *AnalyzeHandler) Analyze(c *gin.Context) {
 	}
 	collectionID := parseCollectionIDForm(c, "collectionId")
 
-	// Enforce cumulative upload size limit using config.MaxUploadBytes
 	var total int64
 	for _, f := range files {
 		total += f.Size
@@ -47,17 +47,17 @@ func (h *AnalyzeHandler) Analyze(c *gin.Context) {
 	ctx := utils.WithCorrelationID(c.Request.Context(), cid)
 	results := h.Service.AnalyzeFilesWithContext(ctx, files, lang, userID, collectionID)
 
-	unavailableMsg := utils.GetMessage(lang, "PythonServiceUnavailable")
-	allPythonDown := true
-	for _, r := range results {
-		if r.Error != unavailableMsg { // if any result is not the unavailable error, python is at least partially up
-			allPythonDown = false
+	// Check for Python service unavailability
+	pyServiceUnavailable := false
+	for _, result := range results {
+		if result.Error == i18n.GetMessage(lang, "PythonServiceUnavailable") {
+			pyServiceUnavailable = true
 			break
 		}
 	}
 
-	if allPythonDown {
-		utils.GinData(c, http.StatusInternalServerError, gin.H{"results": results, "error": unavailableMsg})
+	if pyServiceUnavailable {
+		utils.GinError(c, http.StatusServiceUnavailable, "PythonServiceUnavailable", results)
 		return
 	}
 

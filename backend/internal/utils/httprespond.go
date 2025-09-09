@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samusafe/genericapi/internal/i18n"
 )
 
 // CorrelationIDHeader is the canonical header key for request correlation.
@@ -33,22 +34,14 @@ type JSONErrorResponse struct {
 func GinError(c *gin.Context, status int, key string, detail interface{}) {
 	lang := c.GetString("lang")
 	cid := c.GetString(CorrelationIDHeader)
-	c.JSON(status, JSONErrorResponse{Message: GetMessage(lang, key), Detail: detail, CorrelationID: cid})
+	c.JSON(status, JSONErrorResponse{Message: i18n.GetMessage(lang, key), Detail: detail, CorrelationID: cid})
 }
 
 // GinMsg sends a standard message-only response
 func GinMsg(c *gin.Context, status int, key string) {
 	lang := c.GetString("lang")
 	cid := c.GetString(CorrelationIDHeader)
-	c.JSON(status, JSONErrorResponse{Message: GetMessage(lang, key), CorrelationID: cid})
-}
-
-// GinDataWithMsg sends a data payload and includes a top-level message inside the data object.
-func GinDataWithMsg(c *gin.Context, status int, data gin.H, key string) {
-	lang := c.GetString("lang")
-	cid := c.GetString(CorrelationIDHeader)
-	data["message"] = GetMessage(lang, key)
-	c.JSON(status, gin.H{"data": data, "correlationId": cid})
+	c.JSON(status, JSONErrorResponse{Message: i18n.GetMessage(lang, key), CorrelationID: cid})
 }
 
 func GinData(c *gin.Context, status int, payload interface{}) {
