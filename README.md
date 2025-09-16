@@ -74,48 +74,93 @@ To run this project, you need to set up the environment variables.
     | `PYTHON_PORT`                       | The external port for the python service.                                   | `5000`                    |
     | `LOG_LEVEL`                         | Sets the backend log level. Can be `debug`, `info`, `warn`, or `error`.     | `info`                    |
 
-## Running the Project
+## 🚀 Running the Project
 
-The execution is controlled by the `COMPOSE_PROFILES` variable in your `.env` file.
+This project can be run in two ways, depending on your needs.
 
-### For the Development Environment
+### Method 1: Using Docker Compose (for Quick Development)
 
-This mode enables **hot-reloading** for all services, allowing you to see code changes in real-time.
+This method is ideal for making quick changes and testing individual services with hot-reloading.
 
 1.  **Set the profile in your `.env` file:**
+    Use `development` for hot-reloading or `production` for optimized builds.
 
     ```properties
     COMPOSE_PROFILES=development
     ```
 
 2.  **Build and start the containers:**
+
     ```shell
     docker compose up -d --build
     ```
+
     The services will be available on the ports defined in the `.env` file (e.g., `http://localhost:3000` for the frontend).
 
-### For the Production Environment
-
-This mode runs the optimized and secure versions of the services.
-
-1.  **Set the profile in your `.env` file:**
-
-    ```properties
-    COMPOSE_PROFILES=production
-    ```
-
-2.  **Build and start the containers:**
+3.  **Stopping the Application:**
     ```shell
-    docker compose up -d --build
+    docker compose down
     ```
 
-### Stopping the Application
+### Method 2: Using Kubernetes (for a Production-Like Environment)
 
-To stop all running containers, execute:
+This method deploys the entire application to a local Kubernetes cluster (via Docker Desktop), enabling production features like **auto-scaling**.
 
-```shell
-docker compose down
-```
+#### Prerequisites (One-Time Setup)
+
+1.  **Enable Kubernetes in Docker Desktop:**
+    Go to `Settings` > `Kubernetes` and check `Enable Kubernetes`.
+
+2.  **Edit Your `hosts` File:**
+    This allows you to access the application at `http://smart-doc.local`. Open a text editor **as Administrator** and add the following line to `C:\Windows\System32\drivers\etc\hosts`:
+    ```
+    127.0.0.1 smart-doc.local
+    ```
+
+#### Startup Workflow
+
+1.  **Start the Database:**
+    The database runs separately via Docker Compose.
+
+    ```shell
+    docker compose up db-prod -d
+    ```
+
+2.  **Build Production Images:**
+    Build the optimized images that Kubernetes will use.
+
+    ```shell
+    docker compose build backend-prod python-prod frontend-prod
+    ```
+
+3.  **Create Kubernetes Secret:**
+    Load all variables from your `.env` file securely into the cluster.
+
+    ```shell
+    # If the secret already exists, delete it first: kubectl delete secret app-secret
+    kubectl create secret generic app-secret --from-env-file=.env
+    ```
+
+4.  **Deploy to Kubernetes:**
+    This single command deploys all services, auto-scaling rules, and networking.
+    ```shell
+    kubectl apply -f k8s/
+    ```
+
+Your application is now running! Access it at **http://smart-doc.local**.
+
+#### Shutdown Workflow
+
+1.  **Delete Kubernetes Resources:**
+
+    ```shell
+    kubectl delete -f k8s/
+    ```
+
+2.  **Stop the Database:**
+    ```shell
+    docker compose down
+    ```
 
 ---
 

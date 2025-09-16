@@ -1,0 +1,22 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+
+  # Limits for replicas
+  minReplicas: 1   # Low traffic, keep at least 1 replica
+  maxReplicas: 5   # High traffic, scale up to a maximum of 5 replicas
+
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      # The target is the average CPU utilization
+      target:
+        type: Utilization
+        averageUtilization: 70
