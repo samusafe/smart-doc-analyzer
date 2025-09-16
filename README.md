@@ -82,14 +82,7 @@ This project can be run in two ways, depending on your needs.
 
 This method is ideal for making quick changes and testing individual services with hot-reloading.
 
-1.  **Set the profile in your `.env` file:**
-    Use `development` for hot-reloading or `production` for optimized builds.
-
-    ```properties
-    COMPOSE_PROFILES=development
-    ```
-
-2.  **Build and start the containers:**
+1.  **Build and start the containers:**
 
     ```shell
     docker compose up -d --build
@@ -97,21 +90,18 @@ This method is ideal for making quick changes and testing individual services wi
 
     The services will be available on the ports defined in the `.env` file (e.g., `http://localhost:3000` for the frontend).
 
-3.  **Stopping the Application:**
+2.  **Stopping the Application:**
     ```shell
     docker compose down
     ```
 
 ### Method 2: Using Kubernetes (for a Production-Like Environment)
 
-This method deploys the entire application to a local Kubernetes cluster (via Docker Desktop), enabling production features like **auto-scaling**.
+This method deploys the entire application to a local Kubernetes cluster via Docker, enabling production features like **auto-scaling**.
 
 #### Prerequisites (One-Time Setup)
 
-1.  **Enable Kubernetes in Docker Desktop:**
-    Go to `Settings` > `Kubernetes` and check `Enable Kubernetes`.
-
-2.  **Edit Your `hosts` File:**
+1.  **Edit Your `hosts` File:**
     This allows you to access the application at `http://smart-doc.local`. Open a text editor **as Administrator** and add the following line to `C:\Windows\System32\drivers\etc\hosts`:
     ```
     127.0.0.1 smart-doc.local
